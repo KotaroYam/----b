@@ -1,12 +1,23 @@
 # https://ultralytics.com/images/bus.jpg 中の物体を抽出し，その領域を元の画像に描画せよ
 import cv2
+from pathlib import Path
 from ultralytics import YOLO
+
+
+# ex1.py と同じフォルダにある画像を指定する
+image_path = Path(__file__).parent / "ex1-26.png"
 
 
 model = YOLO("yolov8x.pt")
 
 
-results = model.predict(r"C:\Users\kotar\Documents\領域実習b\ex1-26.png", conf=0.225)
+# 人物のみを検出する（classes=[0] は person）
+results = model.predict(
+    str(image_path),
+    conf=0.225,       # 誤検出を減らす
+    iou=0.5,        # 重複する検出を減らす
+    classes=[0],    # person のみ
+)
 
 
 # 入力画像
@@ -16,7 +27,10 @@ img = results[0].orig_img
 # 認識した物体領域を取得する．
 boxes = results[0].boxes
 
-# 人物の数を数えるための変数
+# クラスIDをクラス名に変換する辞書
+names = results[0].names
+
+# 人物の数を数える
 person_count = 0
 
 
@@ -27,17 +41,17 @@ for box in boxes:
     # 物体のクラスIDを取得する．
     class_id = int(box.cls[0])
 
-    # クラスIDが0なら人物
-    if class_id == 0:
+    # クラス名で人物かどうかを判定する
+    if names[class_id] == "person":
         person_count += 1
 
-    cv2.rectangle(
-        img,
-        (x1, y1),
-        (x2, y2),
-        (0, 0, 255),
-        thickness=3,
-    )
+        cv2.rectangle(
+            img,
+            (x1, y1),
+            (x2, y2),
+            (0, 0, 255),
+            thickness=3,
+        )
 
 
 # 人物数を画像に表示する
